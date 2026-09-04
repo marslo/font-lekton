@@ -41,8 +41,9 @@ jobs:
       - name: Build font zips
         run: |
           zip -r Lekton-Optimized.zip optimized
-          zip -r Lekton-NerdFont.zip NerdFonts
-          ls -la Lekton-*.zip
+          zip -r LektonLig.zip LektonLig
+          zip -r LektonLig-NerdFont.zip LektonLigNF
+          ls -la Lekton*.zip
 
       - name: Install semantic-release
         run: |

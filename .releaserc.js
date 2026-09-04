@@ -172,10 +172,11 @@ module.exports = {
       "message": "chore(release): v${nextRelease.version}"
     }],
     ["@semantic-release/github", {
-      // the two font zips are built by the release workflow before semantic-release runs
+      // the three font zips are built by the release workflow before semantic-release runs
       "assets": [
-        { "path": "Lekton-Optimized.zip", "label": "Lekton-Optimized — desktop faces (dotted 0, big bullet, + Bold Italic)" },
-        { "path": "Lekton-NerdFont.zip",  "label": "Lekton-NerdFont — Nerd Font Mono faces (otf + ttf)" }
+        { "path": "Lekton-Optimized.zip",   "label": "Lekton-Optimized — desktop faces (Bold Italic, dotted 0, big bullet, ^ `)" },
+        { "path": "LektonLig.zip",           "label": "LektonLig — desktop faces + Fira Code ligatures" },
+        { "path": "LektonLig-NerdFont.zip",  "label": "LektonLig-NerdFont — ligatures + Nerd Font Mono (otf + ttf)" }
       ]
     }]
   ]

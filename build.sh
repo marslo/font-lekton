@@ -3,12 +3,13 @@
 #      FileName : build.sh
 #        Author : marslo
 #       Created : 2026-09-03 21:43:00
-#    LastChange : 2026-09-03 21:53:54
+#    LastChange : 2026-09-04 02:11:39
 # =============================================================================
-# one-click (re)build of the modified Lekton fonts:
-#   1. synthesize the missing Bold Italic  ( italic shapes + bold weight )
-#   2. dot the '0' + enlarge the '•'       ( scripts/dotzero.py --square )
-#   3. Nerd Font patch                     ( font-patcher, mono )
+# one-click (re)build of the modified Lekton fonts, one dir per stage:
+#   original/      vendor sources                                   ( unchanged )
+#   optimized/     Bold Italic + dotted 0 + enlarged • + ^ `        ( bolditalic.py -> dotzero.py -> glyphfix.py )
+#   LektonLig/     optimized + Fira Code ligatures                  ( scripts/ligaturize.sh -> Ligaturizer )
+#   LektonLigNF/   LektonLig + Nerd Font glyphs                     ( font-patcher, mono, otf + ttf )
 
 set -euo pipefail
 
@@ -16,9 +17,12 @@ ROOT="$( cd "$( dirname "${BASH_SOURCE[0]:-$0}" )" && pwd )"
 declare -r ROOT
 declare -r ORIG="${ROOT}/original"
 declare -r OPT="${ROOT}/optimized"
-declare -r NF="${ROOT}/NerdFonts"
+declare -r LIG="${ROOT}/LektonLig"
+declare -r NF="${ROOT}/LektonLigNF"
 declare -r BOLDITALIC="${ROOT}/scripts/bolditalic.py"
 declare -r DOTZERO="${ROOT}/scripts/dotzero.py"
+declare -r GLYPHFIX="${ROOT}/scripts/glyphfix.py"
+declare -r LIGATURIZE="${ROOT}/scripts/ligaturize.sh"
 declare -r PREVIEW="${ROOT}/scripts/preview.py"
 # font-patcher: the vendored /opt copy, else whatever 'type -P' finds on PATH ( $FONT_PATCHER overrides )
 declare FONT_PATCHER="${FONT_PATCHER:-/opt/FontPatcher/font-patcher}"
@@ -33,7 +37,7 @@ function die()  { printf 'error: %s\n' "${*}" >&2; exit 1; }
 function step() { printf '\n\033[1;36m==>\033[0m \033[1m%s\033[0m\n' "${*}"; }
 function usage() {
   cat <<'EOF'
-  build.sh — rebuild the modified Lekton fonts ( Bold Italic, dotted 0, enlarged • )
+  build.sh — rebuild the modified Lekton fonts ( Bold Italic, dotted 0, enlarged •, added ^ `, ligatures, Nerd Font )
 
 USAGE
   bash build.sh [ options ]
@@ -45,8 +49,9 @@ OPTIONS
   -h, --help         show this help and exit
 
 OUTPUTS
-  optimized/         4 desktop faces  ( dotted 0 + enlarged • , no NF glyphs )
-  NerdFonts/         4 Nerd Font Mono faces ( + NF glyph set, otf + ttf )
+  optimized/         4 desktop faces  ( dotted 0, enlarged •, added ^ ` , no ligatures, no NF glyphs )
+  LektonLig/         4 desktop faces  ( optimized + Fira Code ligatures )
+  LektonLigNF/       4 Nerd Font Mono faces ( LektonLig + NF glyph set, otf + ttf )
 EOF
   exit 0
 }
@@ -77,10 +82,11 @@ declare -a PATCH_OPTS=( --mono --complete --careful )
 declare -r PATCH_OPTS
 
 command -v fontforge >/dev/null 2>&1 || die 'fontforge required ( brew install fontforge )'
+# shellcheck disable=SC2016
 test -x "${FONT_PATCHER}"            || die 'font-patcher not found ( install to /opt/FontPatcher, put it on PATH, or set $FONT_PATCHER )'
 test -d "${ORIG}"                    || die "missing sources: ${ORIG}"
 
-# 1. synthesize Bold Italic, then assemble the 4 un-dotted base faces in a work dir
+# 1. synthesize Bold Italic, then assemble the 4 base faces in a work dir
 step 'synthesize Bold Italic ( italic shapes + bold weight )'
 WORK="$( mktemp -d )"
 trap 'rm -rf "${WORK}"' EXIT
@@ -90,31 +96,33 @@ run fontforge -script  "${BOLDITALIC}" \
               --bold   "${ORIG}/Lekton-Bold.ttf" \
               -o       "${WORK}/Lekton-BoldItalic.ttf"
 
-# 2. optimized/ — dot the 0 + enlarge the • on the 4 base faces ( no NF )
-step 'optimized/ : dot 0 + enlarge •'
+# 2. optimized/ — dot the 0, then enlarge • + add ^ ` on the 4 base faces ( no ligatures, no NF )
+step 'optimized/ : dot 0, enlarge • + add ^ `'
 run rm -f "${OPT}"/*.ttf
-run fontforge -script "${DOTZERO}" --square -o "${OPT}" "${WORK}"/Lekton-*.ttf
+run fontforge -script "${DOTZERO}"  -o "${OPT}" "${WORK}"/Lekton-*.ttf
+run fontforge -script "${GLYPHFIX}" --square -o "${OPT}" "${OPT}"
 
-# 3. NerdFonts/ — patch the 4 base faces, then dot 0 + enlarge • in place
-step 'NerdFonts/ : Nerd Font patch, then dot 0 + enlarge •'
+# 3. LektonLig/ — copy Fira Code ligatures ( + calt ) into every optimized face
+step 'LektonLig/ : add Fira Code ligatures'
+run rm -f "${LIG}"/*.ttf "${LIG}"/*.otf
+run "${LIGATURIZE}" --from "${OPT}" --to "${LIG}"
+
+# 4. LektonLigNF/ — Nerd Font patch each ligaturized face ( ligatures + dotted 0 + • + ^ ` all survive patching )
+step 'LektonLigNF/ : Nerd Font patch'
 run rm -f "${NF}"/*NerdFont*.otf "${NF}"/*NerdFont*.ttf
-for f in "${WORK}"/Lekton-*.ttf; do
+for f in "${LIG}"/LektonLig-*.ttf; do
   for e in "${EXTS[@]}"; do
     runNF "${FONT_PATCHER}" "${f}" "${PATCH_OPTS[@]}" -ext "${e}" -out "${NF}"
   done
 done
-shopt -s nullglob
-declare -a nfOut=( "${NF}"/*NerdFont*.otf "${NF}"/*NerdFont*.ttf )
-shopt -u nullglob
-test "${#nfOut[@]}" -gt 0 && runNF fontforge -script "${DOTZERO}" --square -o "${NF}" "${nfOut[@]}"
 
-# 4. ( --all only ) refresh the README graphics from the freshly built fonts
+# 5. ( --all only ) refresh the README graphics from the freshly built fonts
 if "${ALL}"; then
-  step 'update README graphics ( assets/preview.svg + zero.svg )'
+  step 'update README graphics ( assets/preview.svg + zero.svg + ligatures.svg )'
   run fontforge -script "${PREVIEW}"
 fi
 
 step 'DONE'
-printf 'optimized/ and NerdFonts/ rebuilt%s.\n' "$( "${ALL}" && printf '; SVGs updated' || true )"
+printf 'optimized/, LektonLig/ and LektonLigNF/ rebuilt%s.\n' "$( "${ALL}" && printf '; SVGs updated' || true )"
 
 # vim:tabstop=2:softtabstop=2:shiftwidth=2:expandtab:filetype=sh:

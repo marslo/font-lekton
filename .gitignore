@@ -8,4 +8,5 @@ package-lock.json
 
 # release artifacts ( built in CI, attached to the GitHub release )
 Lekton-Optimized.zip
-Lekton-NerdFont.zip
+LektonLig.zip
+LektonLig-NerdFont.zip
