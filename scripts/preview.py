@@ -54,6 +54,7 @@ PRESETS = {
         'columns': [ ( 'original', 'Lekton-{}.ttf' ),
                      ( 'nerd font', 'LektonNerdFontMono-{}.ttf' ) ],
         'zero': ( 'Lekton-Regular.ttf', 'LektonNerdFontMono-Regular.ttf' ),
+        'omit': { ( 'original', 'BoldItalic' ) },   # vendor Lekton ships no Bold Italic
     },
 }
 
@@ -190,9 +191,10 @@ def build( preset ):
         rtop = ty + HEAD_H + r * ROW_H
         out.append( f'<line class="rule" x1="{tx}" y1="{rtop}" x2="{tx + LABEL_W + ncols * COL_W:.0f}" y2="{rtop}"/>' )
         out.append( f'<text class="lbl" x="{tx}" y="{rtop + ROW_H / 2 + 4:.0f}">{esc( label )}</text>' )
-        for i, ( _, tmpl ) in enumerate( cols ):
+        omit = preset.get( 'omit', () )
+        for i, ( header, tmpl ) in enumerate( cols ):
             path = os.path.join( preset[ 'base' ], tmpl.format( token ) )
-            if os.path.isfile( path ):
+            if ( header, token ) not in omit and os.path.isfile( path ):
                 font = fontforge.open( path )
                 try:
                     out.append( sampleGroup( font, SAMPLE, col_x( i ) + CELL_PAD,
