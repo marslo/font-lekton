@@ -1,0 +1,11 @@
+# python
+__pycache__/
+*.pyc
+
+# node ( release workflow )
+node_modules/
+package-lock.json
+
+# release artifacts ( built in CI, attached to the GitHub release )
+Lekton-Optimized.zip
+Lekton-NerdFont.zip

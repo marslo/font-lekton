@@ -1,0 +1,51 @@
+# yamllint disable rule:indentation
+---
+ci:
+  autofix_prs: false
+
+default_install_hook_types: [pre-commit, commit-msg]
+default_stages: [pre-commit]
+
+exclude: '\.(svg|png|jpg)$'
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+        name: Trim Trailing Whitespace
+        args: [--markdown-linebreak-ext=md]
+      - id: end-of-file-fixer
+        name: End Of File Fixer
+      - id: check-yaml
+        name: Check YAML
+        args: ["--unsafe"]
+      - id: check-json
+        name: Check JSON
+      - id: check-merge-conflict
+        name: Check Merge Conflict
+      - id: check-case-conflict
+        name: Check Case Conflict
+      - id: mixed-line-ending
+        name: Mixed Line Ending
+        args: ["--fix=lf"]
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.6
+    hooks:
+      - id: ruff-check
+        name: Ruff (lint)
+        args: ["--fix"]
+
+  - repo: https://github.com/crate-ci/typos
+    rev: v1.50.1
+    hooks:
+      - id: typos
+        name: Typos
+        args: ['--write-changes', '--force-exclude']
+      # scan the commit message itself; no --write-changes -> only fail, never rewrite the message
+      - id: typos
+        name: Typos (commit message)
+        alias: typos-commit-msg
+        stages: [commit-msg]
+        args: ['--force-exclude']

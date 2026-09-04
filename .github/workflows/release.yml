@@ -1,0 +1,62 @@
+---
+name: release
+
+# semantic-release: tag + CHANGELOG + GitHub release, with the two font zips attached. releaserc lives in .releaserc.js.
+# on-demand only — run it manually from the Actions tab ( or `gh workflow run release.yml` ).
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write        # push CHANGELOG + create tags/releases
+  issues: write          # semantic-release comments
+  pull-requests: write   # semantic-release comments
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout ( full history + tags )
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 20
+
+      - name: Setup Python ( for the pre-commit prepareCmd )
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.x'
+
+      - name: Install pre-commit
+        run: pip install pre-commit
+
+      - name: Build font zips
+        run: |
+          zip -r Lekton-Optimized.zip optimized
+          zip -r Lekton-NerdFont.zip NerdFonts
+          ls -la Lekton-*.zip
+
+      - name: Install semantic-release
+        run: |
+          npm install --no-save \
+            semantic-release \
+            @semantic-release/commit-analyzer \
+            @semantic-release/release-notes-generator \
+            @semantic-release/changelog \
+            @semantic-release/exec \
+            @semantic-release/git \
+            @semantic-release/github \
+            conventional-changelog-conventionalcommits
+
+      - name: Run semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx semantic-release
