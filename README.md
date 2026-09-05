@@ -1,9 +1,19 @@
 # Optimized Lekton + ligatures + Nerd Font
+
 ---
+
+Modified [Lekton](https://fonts.google.com/specimen/Lekton) with five fixes plus [Fira Code](https://github.com/tonsky/FiraCode) programming ligatures, built for both desktop and terminal ( Nerd Font ) use.
+
+**optimizations**
 
 ![original vs optimized vs Nerd Font — Lekton gains a Bold Italic, a dotted 0, a bigger bullet, ^ ` and ligatures](./assets/preview.svg)
 
-Modified [Lekton](https://fonts.google.com/specimen/Lekton) with five fixes plus [Fira Code](https://github.com/tonsky/FiraCode) programming ligatures, built for both desktop and terminal ( Nerd Font ) use.
+**ligatures**
+
+[`ligaturize.sh`](./scripts/ligaturize.sh) wraps [Ligaturizer](https://github.com/ToxicFrog/Ligaturizer): it copies Fira Code's ligature glyphs and its `calt` rules into every optimized face, scale-corrected to Lekton's cell, and renames the family to `LektonLig` ( `--name`, defaulting to the `--to` dir ). `calt` never merges characters — each ligature is drawn as single-cell pieces that `calt` swaps in, so the advance width never changes and the font stays monospace.
+
+![ligatures in LektonLig](./assets/ligatures.svg)
+
 
 ## features
 
@@ -31,7 +41,7 @@ Modified [Lekton](https://fonts.google.com/specimen/Lekton) with five fixes plus
 ```bash
 original  ──▶  optimized  ──▶  LektonLig  ──▶  LektonLigNF
  vendor       1 bolditalic     5 ligaturize      + Nerd Font
-              2 dotzero          ( Ligaturizer )    ( font-patcher )
+              2 dotzero          ( Ligaturizer )   ( font-patcher )
               3 + 4 glyphfix
 ```
 
