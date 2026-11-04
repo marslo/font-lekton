@@ -1,3 +1,31 @@
+## [2.1.0](https://github.com/marslo/font-lekton/compare/v2.0.0...v2.1.0) (2026-11-04)
+
+### Features
+
+* **glyphfix**, **build**: draw the missing `⌥`, arrows and macOS key symbols from Lekton's own strokes, and alias U+F8FF to `nf-fa-apple` in the Nerd Font build ([b56069d](https://github.com/marslo/font-lekton/commit/b56069d6a5bc6d2541b293c5678d7f9c0361b499))
+  - draw `⌥` in Menlo's proportions from the face's own `−` stroke and slant
+  - compose `← ↑ → ↓` from the `−` stroke with a chevron head in the `›` proportion
+  - stroke `⌘ ⇧ ⌃ ⎋ ⏎ ⌫ ⌦ ⇥ ⇤ ↵ ⇪ ⏏ ␣` with the `−` weight, capped so bold faces stay open
+  - alias U+F8FF ( Apple logo ) to `nf-fa-apple` in `LektonLigNF/` via `scripts/nf-applelogo.py`
+  - build the new glyphs in a cubic scratch font to avoid fontforge 2025.10.9 refcount / stroke crashes
+  - document the new glyphs and the alias step
+
+### Others
+
+* **lekton**: rebuild `LektonLig` and `LektonLigNF` ([d917b04](https://github.com/marslo/font-lekton/commit/d917b04bdddaa12ba20c29931bdcd69b5932f397))
+  - regenerate the 4 ligature faces with `⌥`, `← ↑ → ↓` and the macOS key symbols
+  - regenerate the 8 Nerd Font faces ( `otf` + `ttf` ) from them
+  - alias U+F8FF to `nf-fa-apple` in every Nerd Font face
+* **ligaturize**: slim the /opt/Ligaturizer clone to a shallow, fira-only fetch over forced https ([a3c3212](https://github.com/marslo/font-lekton/commit/a3c3212510ec7d50723330e97294655374cb35ed))
+  - clone --depth 1 --shallow-submodules with only fonts/fira ( skips codeface/plex/… — ~5G → tens of MB )
+  - fetch/update shallowly on later runs ( depth 1, fira submodule only )
+  - add a LIG_SUBMODULES array so more submodules can be listed later
+  - force github https via git::@ + an insteadOf override so a user's ssh rewrite never fires
+
+### Documentation
+
+* update readme ([084c476](https://github.com/marslo/font-lekton/commit/084c47637954cdb7dd94238548813321a1fcf85f))
+
 ## [2.0.0](https://github.com/marslo/font-lekton/compare/v1.0.0...v2.0.0) (2026-09-04)
 
 ### ⚠ BREAKING CHANGE
