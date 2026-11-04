@@ -30,6 +30,9 @@ declare FONT_PATCHER="${FONT_PATCHER:-/opt/FontPatcher/font-patcher}"
 test -x "${FONT_PATCHER}" || FONT_PATCHER="$( type -P font-patcher || true )"
 declare -r FONT_PATCHER
 declare -ra EXTS=( otf ttf )
+# reproducible output: pin head.modified / FFTM ( fontforge, fontTools ) to the last commit touching original/; $SOURCE_DATE_EPOCH overrides
+SOURCE_DATE_EPOCH="${SOURCE_DATE_EPOCH:-$( git -C "${ROOT}" log -1 --format=%ct -- original 2>/dev/null || true )}"
+if test -n "${SOURCE_DATE_EPOCH}"; then export SOURCE_DATE_EPOCH; else unset SOURCE_DATE_EPOCH; fi
 declare DRYRUN=false
 declare VERBOSE=false
 declare ALL=false
