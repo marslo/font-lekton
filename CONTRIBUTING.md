@@ -7,7 +7,7 @@
   - [pipeline](#pipeline)
   - [scripts/bolditalic.py — synthesize Bold Italic](#scriptsbolditalicpy--synthesize-bold-italic)
   - [scripts/dotzero.py — dot the `0`](#scriptsdotzeropy--dot-the-0)
-  - [scripts/glyphfix.py — enlarge the `•`, add `^` `` ` ``](#scriptsglyphfixpy--enlarge-the--add--)
+  - [scripts/glyphfix.py — enlarge the `•`, add `^` `` ` `` `⌥`](#scriptsglyphfixpy--enlarge-the--add---)
   - [scripts/ligaturize.sh — add Fira Code ligatures](#scriptsligaturizesh--add-fira-code-ligatures)
   - [build.sh — one-click rebuild](#buildsh--one-click-rebuild)
   - [scripts/preview.py — regenerate the README graphics](#scriptspreviewpy--regenerate-the-readme-graphics)
@@ -29,6 +29,7 @@ How the modified Lekton faces are produced. Everything is driven by [`build.sh`]
 | **FontForge** ( with python )   | all scripts ( bolditalic, dotzero, glyphfix, preview )  | `brew install fontforge` · `sudo apt install fontforge python3-fontforge` |
 | **Ligaturizer**                 | the `LektonLig/` build ( ligatures )                    | auto-cloned to `/opt/Ligaturizer` by `ligaturize.sh`                      |
 | **font-patcher** ( Nerd Fonts ) | the `LektonLigNF/` build only                           | see below                                                                 |
+| **fontTools** ( python3 )       | `nf-applelogo.py` ( U+F8FF alias in `LektonLigNF/` )    | `pip install fonttools`                                                   |
 | **harfbuzz** ( `hb-shape` )     | `preview.py` ligature graphic ( `--all` )               | `brew install harfbuzz` · `sudo apt install libharfbuzz-bin`             |
 
 Always run the python scripts through FontForge's python — `fontforge -script …`, never plain `python3`.
@@ -56,20 +57,22 @@ original/  ──[ bolditalic.py ]──▶  + Lekton-BoldItalic   (synth 4th fa
                                           ▼
                               [ dotzero.py ] dot 0
                                           ▼
-                       [ glyphfix.py --square ] enlarge • + add ^ `
+                       [ glyphfix.py --square ] enlarge • + add ^ ` ⌥ ⌘ ← …
                                           ▼
-                                    optimized/          (1–4, no ligatures, no NF)
+                                    optimized/          (1–5, no ligatures, no NF)
                                           ▼
                           [ ligaturize.sh → Ligaturizer ] + Fira Code ligatures
                                           ▼
-                                    LektonLig/           (1–5, no NF)
+                                    LektonLig/           (1–6, no NF)
                                           ▼
                                  [ font-patcher ] + Nerd Font glyphs
                                           ▼
-                                    LektonLigNF/         (1–5 + NF, otf + ttf)
+                    [ nf-applelogo.py ] U+F8FF ( Apple logo ) -> nf-fa-apple
+                                          ▼
+                                    LektonLigNF/         (1–6 + NF, otf + ttf)
 ```
 
-The dotted `0`, enlarged `•`, `^` `` ` `` and the `calt` ligatures all survive both Ligaturizer and font-patcher, so each transform runs **once** — no re-dotting after patching.
+The dotted `0`, enlarged `•`, `^` `` ` ``, the arrows + key symbols and the `calt` ligatures all survive both Ligaturizer and font-patcher, so each transform runs **once** — no re-dotting after patching.
 
 ## scripts/bolditalic.py — synthesize Bold Italic
 
@@ -118,7 +121,7 @@ fontforge -script scripts/dotzero.py -o OUTDIR path/to/*.ttf
 > [!WARNING]
 > Re-running on an already-dotted face adds a **second** dot to `0` ( it warns and proceeds ). `build.sh` always dots freshly built faces, so this never happens in the normal flow.
 
-## scripts/glyphfix.py — enlarge the `•`, add `^` `` ` ``
+## scripts/glyphfix.py — enlarge the `•`, add `^` `` ` `` `⌥`
 
 Fixes the symbol glyphs ( everything that isn't the `0` ). Advance width is kept; creates glyphs on faces that lack them.
 
@@ -126,11 +129,18 @@ Fixes the symbol glyphs ( everything that isn't the `0` ). Advance width is kept
   - `--square [N]` — scale the original outline, keeping its square shape ( half-size N, default 100 → 200 wide ). **build.sh uses this.**
   - `--bullet [N]` — replace it with a round dot ( radius N, default 100 → ⌀200 ).
 - **added `^` `` ` ``** — Lekton ships **without** `^` ( asciicircum, U+005E ) and `` ` `` ( grave, U+0060 ). Each is synthesized from the **top ( accent ) contour** of the face's own `â` / `à`, so it matches Lekton's stroke weight and style. This is also what makes the font ligaturizable — **Ligaturizer aborts on a font missing `^`**, so glyphfix must run before it.
+- **added `⌥`** — Lekton ships **without** `⌥` ( U+2325, option key ); macOS then renders it in Menlo, so key hints like `⌥0` mix two fonts. Drawn in Menlo's proportions ( top-left bar → diagonal → bottom-right bar, plus a detached top-right bar ), scaled to the cap height, from the face's own `−` stroke and span; the italics ship no `−`, so they use the `-` stroke and `0.86 × advance`. The diagonal is offset so its perpendicular thickness equals the bars; italics are skewed by the face's italic angle. Skipped on a face that already has `⌥`.
+- **added `← ↑ → ↓`** — Lekton ships **no arrows**. Built from the face's own parts: the `−` ( or `-` ) stroke for the shaft and a chevron head of the same weight in the proportion of its `›` ( guilsinglright ), on the math axis; `← ↑ ↓` are `→` mirrored / rotated.
+- **added macOS key symbols `⌘ ⇧ ⌃ ⎋ ⏎ ⌫ ⌦ ⇥ ⇤ ↵ ⇪ ⏏ ␣`** — centerline paths stroked with the `−` weight ( capped at `KEY_MAX` = 14 % of the box, so bold stays open ) inside the `⌥` box; `⌦` / `⇤` mirror `⌫` / `⇥`.
+- Arrows + key symbols are built in a cubic scratch font then copied in ( fontforge 2025.10.9 crashes stroking quadratic glyphs ); upright first, then slanted on italics. The same block lives in `Blex/glyphfix.py` of [marslo/fonts](https://github.com/marslo/fonts).
 
 ```bash
-fontforge -script scripts/glyphfix.py --square -o OUTDIR path/to/*.ttf   # default: square • + add ^ `
-fontforge -script scripts/glyphfix.py --bullet -o OUTDIR path/to/*.ttf   # round • instead
-fontforge -script scripts/glyphfix.py --no-ascii -o OUTDIR path/to/*.ttf # only touch the bullet
+fontforge -script scripts/glyphfix.py --square -o OUTDIR path/to/*.ttf    # default: square • + add ^ ` + arrows + keys
+fontforge -script scripts/glyphfix.py --bullet -o OUTDIR path/to/*.ttf    # round • instead
+fontforge -script scripts/glyphfix.py --no-ascii -o OUTDIR path/to/*.ttf  # skip ^ `
+fontforge -script scripts/glyphfix.py --no-option -o OUTDIR path/to/*.ttf # skip ⌥
+fontforge -script scripts/glyphfix.py --no-arrows -o OUTDIR path/to/*.ttf # skip ← ↑ → ↓
+fontforge -script scripts/glyphfix.py --no-keys -o OUTDIR path/to/*.ttf   # skip the macOS key symbols
 ```
 
 | OPTION              | DEFAULT                   | DESCRIPTION                                                                                |
@@ -139,6 +149,9 @@ fontforge -script scripts/glyphfix.py --no-ascii -o OUTDIR path/to/*.ttf # only 
 | `--square [N]`      | on ( `100` by default )   | enlarge `•` keeping its square shape ( half-size N → `100` = 200 wide )                    |
 | `--bullet [N]`      | off ( `100` when passed ) | enlarge `•` as a round dot ( radius N → `100` = ⌀200 ); mutually exclusive with `--square` |
 | `--no-ascii`        | —                         | skip adding `^` / `` ` ``                                                                   |
+| `--no-option`       | —                         | skip adding `⌥`                                                                            |
+| `--no-arrows`       | —                         | skip adding `← ↑ → ↓`                                                                      |
+| `--no-keys`         | —                         | skip adding `⌘ ⇧ ⌃ ⎋ ⏎ ⌫ ⌦ ⇥ ⇤ ↵ ⇪ ⏏ ␣`                                                    |
 | `--rename SUFFIX`   | —                         | append SUFFIX to the family name                                                           |
 | `-n, --dry-run`     | —                         | print actions without writing                                                              |
 
@@ -167,7 +180,7 @@ bash build.sh --verbose    # show the font-patcher output for the NF step
 bash build.sh --dry-run    # print every command, touch nothing
 ```
 
-Steps: synthesize Bold Italic → `optimized/` ( dot 0, big •, add ^ ` ) → `LektonLig/` ( ligaturize ) → `LektonLigNF/` ( font-patcher ) → `--all` also runs `preview.py`. Intermediates live in a `mktemp` dir and are removed on exit; `original/` is never modified.
+Steps: synthesize Bold Italic → `optimized/` ( dot 0, big •, add ^ ` + arrows + keys ) → `LektonLig/` ( ligaturize ) → `LektonLigNF/` ( font-patcher + `nf-applelogo.py` ) → `--all` also runs `preview.py`. Intermediates live in a `mktemp` dir and are removed on exit; `original/` is never modified.
 
 | FLAG            | EFFECT                                                            |
 | --------------- | ----------------------------------------------------------------- |

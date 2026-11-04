@@ -2,11 +2,11 @@
 
 ---
 
-Modified [Lekton](https://fonts.google.com/specimen/Lekton) with five fixes plus [Fira Code](https://github.com/tonsky/FiraCode) programming ligatures, built for both desktop and terminal ( Nerd Font ) use.
+Modified [Lekton](https://fonts.google.com/specimen/Lekton) with six fixes plus [Fira Code](https://github.com/tonsky/FiraCode) programming ligatures, built for both desktop and terminal ( Nerd Font ) use.
 
 **optimizations**
 
-![original vs optimized vs Nerd Font — Lekton gains a Bold Italic, a dotted 0, a bigger bullet, ^ ` and ligatures](./assets/preview.svg)
+![original vs optimized vs Nerd Font — Lekton gains a Bold Italic, a dotted 0, a bigger bullet, ^ ` ⌥ ⌘ ← and ligatures](./assets/preview.svg)
 
 **ligatures**
 
@@ -23,26 +23,27 @@ Modified [Lekton](https://fonts.google.com/specimen/Lekton) with five fixes plus
 | 2 | **dotted `0`**        | Lekton's `0` and `o` look nearly identical; a centered dot disambiguates them                                                                   | <img src="./assets/zero.svg" width="240" alt="original 0 looks like o; optimized 0 has a centered dot"> |
 | 3 | **bigger `•`**        | Lekton's bullet is a tiny 58-unit square ( ≈5.8% of em ); scaled up to ~200 ( 20% of em ), keeping its original square shape                    | –                                                                                                       |
 | 4 | **added `^` `` ` ``** | Lekton ships without `^` ( asciicircum ) and `` ` `` ( grave ); synthesized from the face's own **â / à** accents so they match Lekton's stroke | –                                                                                                       |
-| 5 | **ligatures**         | [Fira Code](https://github.com/tonsky/FiraCode) programming ligatures copied in via `calt` ( monospace-safe )                                   | ![Fira Code ligatures in LektonLig](./assets/ligatures.svg)                                             |
+| 5 | **added `⌥` `⌘` `←`…** | Lekton ships without arrows ( `← ↑ → ↓` ) and macOS key symbols ( `⌥ ⌘ ⇧ ⌃ ⎋ ⏎ ⌫ ⌦ ⇥ ⇤ ↵ ⇪ ⏏ ␣` ), so macOS falls back to Menlo for each; drawn by `glyphfix.py` from the face's own `−` / `-` stroke, `›` proportion and italic slant | –                                                                                                       |
+| 6 | **ligatures**         | [Fira Code](https://github.com/tonsky/FiraCode) programming ligatures copied in via `calt` ( monospace-safe )                                   | ![Fira Code ligatures in LektonLig](./assets/ligatures.svg)                                             |
 
-`optimized/` carries **1–4**; `LektonLig/` adds **5**; `LektonLigNF/` adds the Nerd Font glyph set on top.
+`optimized/` carries **1–5**; `LektonLig/` adds **6**; `LektonLigNF/` adds the Nerd Font glyph set on top.
 
 ## layout
 
 | DIR                             | CONTENTS                                                                        | FEATURES |
 | ------------------------------- | ------------------------------------------------------------------------------- | -------- |
 | [`original/`](./original)       | vendor Lekton — Regular / Bold / Italic ( untouched )                           | —        |
-| [`optimized/`](./optimized)     | 4 desktop faces — Regular / Bold / Italic / **Bold Italic**                     | 1–4      |
-| [`LektonLig/`](./LektonLig)     | 4 desktop faces + Fira Code ligatures                                           | 1–5      |
-| [`LektonLigNF/`](./LektonLigNF) | 4 Nerd Font Mono faces ( `otf` + `ttf` )                                        | 1–5 + NF |
-| [`scripts/`](./scripts)         | `bolditalic.py` · `dotzero.py` · `glyphfix.py` · `ligaturize.sh` · `preview.py` | —        |
+| [`optimized/`](./optimized)     | 4 desktop faces — Regular / Bold / Italic / **Bold Italic**                     | 1–5      |
+| [`LektonLig/`](./LektonLig)     | 4 desktop faces + Fira Code ligatures                                           | 1–6      |
+| [`LektonLigNF/`](./LektonLigNF) | 4 Nerd Font Mono faces ( `otf` + `ttf` )                                        | 1–6 + NF |
+| [`scripts/`](./scripts)         | `bolditalic.py` · `dotzero.py` · `glyphfix.py` · `ligaturize.sh` · `nf-applelogo.py` · `preview.py` | —        |
 | [`build.sh`](./build.sh)        | one-click rebuild of all three output dirs                                      | —        |
 
 ```bash
 original  ──▶  optimized  ──▶  LektonLig  ──▶  LektonLigNF
- vendor       1 bolditalic     5 ligaturize      + Nerd Font
+ vendor       1 bolditalic     6 ligaturize      + Nerd Font
               2 dotzero          ( Ligaturizer )   ( font-patcher )
-              3 + 4 glyphfix
+              3 + 4 + 5 glyphfix
 ```
 
 Lekton declares no OFL Reserved Font Name, so the family keeps the name **Lekton** ( `optimized/` ), the ligature build is **LektonLig**, and the Nerd Font faces install as **LektonLigNerdFontMono**.
@@ -72,7 +73,7 @@ bash build.sh --help       # list all options
 ```
 
 Requires:
-- FontForge ( `brew install fontforge` ), `hb-shape` ( `brew install harfbuzz`, for `--all` )
+- FontForge ( `brew install fontforge` ), fontTools ( `pip install fonttools`, for `nf-applelogo.py` ), `hb-shape` ( `brew install harfbuzz`, for `--all` )
 - Nerd Font step, `font-patcher` at `/opt/FontPatcher/font-patcher`.
 - `ligaturize.sh` clones [Ligaturizer](https://github.com/ToxicFrog/Ligaturizer) to `/opt/Ligaturizer`, on first run and `reset --hard`s it to the latest on later runs
 - Script details and options: [CONTRIBUTING.md](./CONTRIBUTING.md).
@@ -88,6 +89,6 @@ Ligaturizer copies Fira Code's ligature glyphs and its `calt` rules into each fa
 ## license & credits
 
 - **Lekton** © Accademia di Belle Arti di Urbino — [SIL Open Font License 1.1](./LICENSE) ( no Reserved Font Name ).
-- Modifications ( Bold Italic, dotted `0`, bigger `•`, added `^` `` ` ``, ligature + Nerd Font patching ) by marslo, released under the same OFL 1.1.
+- Modifications ( Bold Italic, dotted `0`, bigger `•`, added `^` `` ` ``, arrows + macOS key symbols, ligature + Nerd Font patching ) by marslo, released under the same OFL 1.1.
 - Ligatures via [Fira Code](https://github.com/tonsky/FiraCode) ( OFL 1.1 ) · [Ligaturizer](https://github.com/ToxicFrog/Ligaturizer) ( script GPL-3.0, used as an external tool — the fonts it produces are not GPL ).
 - Nerd Font glyphs via [Nerd Fonts](https://github.com/ryanoasis/nerd-fonts).

@@ -3,13 +3,13 @@
 #      FileName : build.sh
 #        Author : marslo
 #       Created : 2026-09-03 21:43:00
-#    LastChange : 2026-09-04 02:11:39
+#    LastChange : 2026-11-03 19:31:43
 # =============================================================================
 # one-click (re)build of the modified Lekton fonts, one dir per stage:
 #   original/      vendor sources                                   ( unchanged )
-#   optimized/     Bold Italic + dotted 0 + enlarged • + ^ `        ( bolditalic.py -> dotzero.py -> glyphfix.py )
+#   optimized/     Bold Italic + dotted 0 + enlarged • + ^ ` + ⌥ ⌘ ← …( bolditalic.py -> dotzero.py -> glyphfix.py )
 #   LektonLig/     optimized + Fira Code ligatures                  ( scripts/ligaturize.sh -> Ligaturizer )
-#   LektonLigNF/   LektonLig + Nerd Font glyphs                     ( font-patcher, mono, otf + ttf )
+#   LektonLigNF/   LektonLig + Nerd Font glyphs + U+F8FF alias       ( font-patcher, mono, otf + ttf -> nf-applelogo.py )
 
 set -euo pipefail
 
@@ -24,6 +24,7 @@ declare -r DOTZERO="${ROOT}/scripts/dotzero.py"
 declare -r GLYPHFIX="${ROOT}/scripts/glyphfix.py"
 declare -r LIGATURIZE="${ROOT}/scripts/ligaturize.sh"
 declare -r PREVIEW="${ROOT}/scripts/preview.py"
+declare -r APPLELOGO="${ROOT}/scripts/nf-applelogo.py"
 # font-patcher: the vendored /opt copy, else whatever 'type -P' finds on PATH ( $FONT_PATCHER overrides )
 declare FONT_PATCHER="${FONT_PATCHER:-/opt/FontPatcher/font-patcher}"
 test -x "${FONT_PATCHER}" || FONT_PATCHER="$( type -P font-patcher || true )"
@@ -37,7 +38,7 @@ function die()  { printf 'error: %s\n' "${*}" >&2; exit 1; }
 function step() { printf '\n\033[1;36m==>\033[0m \033[1m%s\033[0m\n' "${*}"; }
 function usage() {
   cat <<'EOF'
-  build.sh — rebuild the modified Lekton fonts ( Bold Italic, dotted 0, enlarged •, added ^ `, ligatures, Nerd Font )
+  build.sh — rebuild the modified Lekton fonts ( Bold Italic, dotted 0, enlarged •, added ^ ` + arrows + macOS key symbols, ligatures, Nerd Font )
 
 USAGE
   bash build.sh [ options ]
@@ -49,7 +50,7 @@ OPTIONS
   -h, --help         show this help and exit
 
 OUTPUTS
-  optimized/         4 desktop faces  ( dotted 0, enlarged •, added ^ ` , no ligatures, no NF glyphs )
+  optimized/         4 desktop faces  ( dotted 0, enlarged •, added ^ ` + arrows + key symbols, no ligatures, no NF glyphs )
   LektonLig/         4 desktop faces  ( optimized + Fira Code ligatures )
   LektonLigNF/       4 Nerd Font Mono faces ( LektonLig + NF glyph set, otf + ttf )
 EOF
@@ -96,8 +97,8 @@ run fontforge -script  "${BOLDITALIC}" \
               --bold   "${ORIG}/Lekton-Bold.ttf" \
               -o       "${WORK}/Lekton-BoldItalic.ttf"
 
-# 2. optimized/ — dot the 0, then enlarge • + add ^ ` on the 4 base faces ( no ligatures, no NF )
-step 'optimized/ : dot 0, enlarge • + add ^ `'
+# 2. optimized/ — dot the 0, then enlarge • + add ^ ` + arrows + key symbols on the 4 base faces ( no ligatures, no NF )
+step 'optimized/ : dot 0, enlarge • + add ^ ` + arrows + key symbols'
 run rm -f "${OPT}"/*.ttf
 run fontforge -script "${DOTZERO}"  -o "${OPT}" "${WORK}"/Lekton-*.ttf
 run fontforge -script "${GLYPHFIX}" --square -o "${OPT}" "${OPT}"
@@ -107,7 +108,7 @@ step 'LektonLig/ : add Fira Code ligatures'
 run rm -f "${LIG}"/*.ttf "${LIG}"/*.otf
 run "${LIGATURIZE}" --from "${OPT}" --to "${LIG}"
 
-# 4. LektonLigNF/ — Nerd Font patch each ligaturized face ( ligatures + dotted 0 + • + ^ ` all survive patching )
+# 4. LektonLigNF/ — Nerd Font patch each ligaturized face ( ligatures + dotted 0 + • + ^ ` + arrows + keys all survive patching )
 step 'LektonLigNF/ : Nerd Font patch'
 run rm -f "${NF}"/*NerdFont*.otf "${NF}"/*NerdFont*.ttf
 for f in "${LIG}"/LektonLig-*.ttf; do
@@ -115,6 +116,8 @@ for f in "${LIG}"/LektonLig-*.ttf; do
     runNF "${FONT_PATCHER}" "${f}" "${PATCH_OPTS[@]}" -ext "${e}" -out "${NF}"
   done
 done
+# alias U+F8FF ( Apple logo, PUA ) to the patched-in nf-fa-apple ( U+F179 ) — cmap only, no outline added
+run python3 "${APPLELOGO}" "${NF}"
 
 # 5. ( --all only ) refresh the README graphics from the freshly built fonts
 if "${ALL}"; then
