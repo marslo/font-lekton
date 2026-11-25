@@ -1,3 +1,16 @@
+## [2.1.1](https://github.com/marslo/font-lekton/compare/v2.1.0...v2.1.1) (2026-11-25)
+
+### Bug Fixes
+
+* **build**: pin SOURCE_DATE_EPOCH to the last original/ commit so rebuilds are byte-identical ( head.modified + FFTM ), and restamp all built fonts ([d2f2f5d](https://github.com/marslo/font-lekton/commit/d2f2f5d785a0a4769e8fe3386ab0783e92459561))
+
+### CI/CD
+
+* **release**: move to semantic-release 26 with function changelog templates ([7884972](https://github.com/marslo/font-lekton/commit/7884972ee67a8680a46571de70339bc667edabd0))
+  - render changelog notes with function templates for `conventional-changelog-writer` 9
+  - file untyped commits under Others and keep trailer spacing in commit bodies
+  - run the release workflow on node 26 with pinned plugin majors
+
 ## [2.1.0](https://github.com/marslo/font-lekton/compare/v2.0.0...v2.1.0) (2026-11-04)
 
 ### Features
